@@ -1,10 +1,12 @@
 # UI Test Agent
 
-> An AI-powered, browser-driven QA specialist for **GitHub Copilot Chat in VS Code**. Drives a real Chrome browser via the official [`chrome-devtools-mcp`](https://www.npmjs.com/package/chrome-devtools-mcp) server and turns plain English into evidence-backed QA reports across desktop, tablet, and mobile.
+> An AI-powered, browser-driven QA specialist for **GitHub Copilot Chat in VS Code**. Turns plain English into evidence-backed QA reports across desktop, tablet, and mobile — by driving a real browser end to end. No test code. No DSL. No config files.
 
 [![Marketplace](https://img.shields.io/visual-studio-marketplace/v/BipulRaman.ui-test-agent?label=VS%20Code%20Marketplace&color=007ACC&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/BipulRaman.ui-test-agent?color=informational)](https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./extension/LICENSE)
+
+> **Heads up:** the agent runs on top of **GitHub Copilot Chat in Agent Mode**, so an **active [GitHub Copilot](https://github.com/features/copilot) subscription** (Individual, Business, Enterprise, or Free trial) with Copilot Chat installed and signed in is required.
 
 ---
 
@@ -23,7 +25,7 @@ Installing the extension does three things automatically:
 
 1. **Installs the `UI Test` agent** (`ui-test.agent.md`) into your VS Code prompts folder.
 2. **Installs 8 named prompt entry points** — `/ui-test-smoke`, `/ui-test-a11y`, `/ui-test-perf`, `/ui-test-console`, `/ui-test-links`, `/ui-test-responsive`, `/ui-test-scaffold`, `/ui-test-run` — so any workflow can be launched from Copilot Chat.
-3. **Registers the [`chrome-devtools-mcp`](https://www.npmjs.com/package/chrome-devtools-mcp) MCP server** with VS Code (auto-launched via `npx`) so the agent can drive a real Chrome browser without any manual `mcp.json` editing.
+3. **Wires up a built-in browser engine** so the agent can drive a real browser to perform the checks. Auto-configured — no manual setup, no config files to edit.
 
 No test code, no DSL, no manual configuration.
 
@@ -32,8 +34,9 @@ No test code, no DSL, no manual configuration.
 ## Quick start
 
 1. Install the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent).
-2. Open **GitHub Copilot Chat**.
-3. Try one of these:
+2. Make sure you're signed in to **GitHub Copilot** in VS Code.
+3. Open **GitHub Copilot Chat** and switch to **Agent Mode**.
+4. Try one of these:
 
 ```text
 @UI Test  Test https://example.com on desktop, mobile, tablet
@@ -66,9 +69,10 @@ All workflows can fan out across the standard device matrix (`desktop · desktop
 
 ## Requirements
 
-- **VS Code 1.101+** with GitHub Copilot Chat enabled.
-- **Node.js** on `PATH` (so `npx` can launch the MCP server).
-- **Google Chrome** installed (used by `chrome-devtools-mcp`).
+- **Active [GitHub Copilot](https://github.com/features/copilot) subscription** (Individual, Business, Enterprise, or Free trial) with **Copilot Chat enabled** and signed in. The agent runs on top of Copilot Chat in Agent Mode — without an active subscription it cannot run.
+- **VS Code 1.101+** with the GitHub Copilot Chat extension installed.
+- **Node.js** on `PATH`.
+- **Google Chrome / Chromium / Edge** installed locally (auto-detected).
 
 ---
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UI Test Agent — AI-powered browser QA in VS Code Copilot Chat</title>
-  <meta name="description" content="UI Test Agent is a VS Code extension that turns plain English into evidence-backed QA reports. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile — driven by a real Chrome browser via Chrome DevTools MCP." />
+  <meta name="description" content="UI Test Agent is a VS Code extension that turns plain English into evidence-backed QA reports. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile — driven by a real browser. Requires an active GitHub Copilot subscription with Copilot Chat." />
   <meta name="theme-color" content="#0b1020" />
 
   <!-- Open Graph -->
@@ -56,7 +56,7 @@
           <span class="eyebrow">VS Code · Copilot Chat · Agent Mode</span>
           <h1>Browser QA in plain English.<br /><span class="grad">Evidence-backed reports.</span></h1>
           <p class="lede">
-            UI Test Agent drives a real Chrome browser from inside Copilot Chat. Ask it to smoke-test, audit accessibility, check performance, scan links, or verify responsive layouts — and get back a Markdown report with screenshots, Lighthouse scores, console errors, and failed requests.
+            UI Test Agent drives a real browser from inside Copilot Chat. Ask it to smoke-test, audit accessibility, check performance, scan links, or verify responsive layouts — and get back a Markdown report with screenshots, performance scores, console errors, and failed requests.
           </p>
           <div class="hero-cta">
             <a class="btn btn-primary btn-lg" href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">
@@ -85,7 +85,7 @@
             <div class="terminal-body">
               <p class="line user"><span class="prompt">@UI Test</span> Test https://example.com on desktop, mobile, tablet</p>
               <p class="line agent"><span class="tag">scope</span> 3 devices · smoke + console + a11y · 1 URL</p>
-              <p class="line agent"><span class="tag">chrome</span> launching headless via chrome-devtools-mcp…</p>
+              <p class="line agent"><span class="tag">browser</span> launching real browser session…</p>
               <p class="line agent"><span class="tag ok">pass</span> desktop · 200 OK · TTFB 142ms · 0 console errors</p>
               <p class="line agent"><span class="tag ok">pass</span> tablet · 200 OK · LCP 1.4s · a11y 0.96</p>
               <p class="line agent"><span class="tag warn">warn</span> mobile · touch-target 44×44 violation × 2</p>
@@ -111,8 +111,8 @@
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a6 6 0 016 6h-2a4 4 0 00-4-4V6z"/></svg>
             </div>
-            <h3>Real Chrome, real results</h3>
-            <p>Drives the official <code>chrome-devtools-mcp</code> server so every check runs against a real browser — not a simulation.</p>
+            <h3>Real browser, real results</h3>
+            <p>Every check runs against a real Chromium-based browser — not a simulation — so what you see is what real users get.</p>
           </article>
 
           <article class="feature">
@@ -135,8 +135,8 @@
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M21 6h-7l-2-2H3v14h18V6zM5 16V8h14v8H5z"/></svg>
             </div>
-            <h3>Zero MCP setup</h3>
-            <p>The extension registers the Chrome DevTools MCP server automatically. No <code>mcp.json</code> editing required.</p>
+            <h3>Zero setup</h3>
+            <p>The browser engine is wired up automatically. No config files to edit, no extra extensions to install, no setup wizard.</p>
           </article>
 
           <article class="feature">
@@ -244,9 +244,10 @@
           <article class="install-card">
             <h3>Requirements</h3>
             <ul class="check-list">
-              <li>VS Code 1.101+ with GitHub Copilot Chat enabled</li>
-              <li>Node.js on <code>PATH</code> (for <code>npx</code>)</li>
-              <li>Google Chrome installed locally</li>
+              <li>Active <a href="https://github.com/features/copilot" target="_blank" rel="noopener">GitHub Copilot</a> subscription with <strong>Copilot Chat</strong> enabled</li>
+              <li>VS Code 1.101+ with the GitHub Copilot Chat extension</li>
+              <li>Node.js on <code>PATH</code></li>
+              <li>Google Chrome / Chromium / Edge installed locally (auto-detected)</li>
             </ul>
           </article>
         </div>
@@ -293,6 +294,10 @@
         </header>
 
         <div class="faq">
+          <details>
+            <summary>Do I need a GitHub Copilot subscription?</summary>
+            <p>Yes. The agent runs on top of <strong>GitHub Copilot Chat in Agent Mode</strong>, so an active <a href="https://github.com/features/copilot" target="_blank" rel="noopener">GitHub Copilot</a> subscription (Individual, Business, Enterprise, or Free trial) with Copilot Chat enabled and signed in is required. Without it, Copilot Chat is unavailable and the agent cannot run.</p>
+          </details>
           <details>
             <summary>Do I need to write any test code?</summary>
             <p>No. You write Markdown — or just a sentence in chat. The agent interprets it, runs the checks, and writes the report.</p>

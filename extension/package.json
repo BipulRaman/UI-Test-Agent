@@ -1,7 +1,7 @@
 {
   "name": "ui-test-agent",
   "displayName": "UI Test Agent",
-  "description": "AI-powered, browser-driven QA specialist for VS Code Copilot Chat. One-click install of the UI Test agent, 8 prompt entry points, and auto-configured Chrome DevTools MCP server.",
+  "description": "Plain-English browser QA inside Copilot Chat. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile — with evidence-backed Markdown reports. Zero config.",
   "version": "0.3.1",
   "publisher": "BipulRaman",
   "license": "MIT",
@@ -21,10 +21,13 @@
     "agent",
     "ui-test",
     "qa",
+    "testing",
     "accessibility",
+    "a11y",
     "lighthouse",
-    "chrome-devtools",
-    "mcp",
+    "performance",
+    "responsive",
+    "smoke-test",
     "browser-automation"
   ],
   "repository": {
@@ -63,12 +66,12 @@
       },
       {
         "command": "uiTestAgent.mcpStatus",
-        "title": "UI Test Agent: Show Chrome DevTools MCP Status",
+        "title": "UI Test Agent: Show Browser Engine Status",
         "category": "UI Test Agent"
       },
       {
         "command": "uiTestAgent.checkEnvironment",
-        "title": "UI Test Agent: Check Environment (Node.js + Chrome)",
+        "title": "UI Test Agent: Check Environment",
         "category": "UI Test Agent"
       }
     ],
@@ -83,17 +86,17 @@
         "uiTestAgent.enableChromeDevToolsMcp": {
           "type": "boolean",
           "default": true,
-          "description": "Register the Chrome DevTools MCP server (chrome-devtools-mcp) so the agent can drive a real Chrome browser. Requires Node.js / npx on PATH."
+          "description": "Enable the built-in browser engine that lets the agent drive a real browser. Disable only if you want to use a custom or external setup."
         },
         "uiTestAgent.chromeDevToolsMcpVersion": {
           "type": "string",
           "default": "latest",
-          "description": "npm version tag of the chrome-devtools-mcp package to launch (e.g. 'latest' or '0.7.0')."
+          "description": "Version of the bundled browser engine to use. Leave at 'latest' unless you need to pin a specific build."
         },
         "uiTestAgent.chromeExecutablePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Absolute path to a Chrome / Chromium / Edge executable. When set, this is passed to chrome-devtools-mcp as `--executablePath` and overrides auto-detection. Leave empty to let chrome-devtools-mcp auto-detect Chrome (or auto-download a Chromium build on first use).",
+          "markdownDescription": "Absolute path to a Chrome / Chromium / Edge browser executable. When set, the agent will use this browser instead of auto-detecting one. Leave empty for automatic detection.",
           "scope": "machine-overridable"
         },
         "uiTestAgent.chromeChannel": {
@@ -101,20 +104,20 @@
           "default": "",
           "enum": ["", "stable", "beta", "canary", "dev"],
           "enumDescriptions": [
-            "Default — let chrome-devtools-mcp choose.",
+            "Default — auto-detect.",
             "Use installed Chrome Stable.",
             "Use installed Chrome Beta.",
             "Use installed Chrome Canary.",
             "Use installed Chrome Dev."
           ],
-          "markdownDescription": "Chrome release channel passed to chrome-devtools-mcp as `--channel`. Ignored when `#uiTestAgent.chromeExecutablePath#` is set."
+          "markdownDescription": "Chrome release channel to use when driving the browser. Ignored when `#uiTestAgent.chromeExecutablePath#` is set."
         }
       }
     },
     "mcpServerDefinitionProviders": [
       {
         "id": "uiTestAgent.chromeDevTools",
-        "label": "Chrome DevTools (UI Test Agent)"
+        "label": "UI Test Agent — Browser Engine"
       }
     ]
   },

@@ -319,7 +319,7 @@ async function openPromptsFolder(context: vscode.ExtensionContext): Promise<void
 // ---------------------------------------------------------------------------
 
 const MCP_PROVIDER_ID = 'uiTestAgent.chromeDevTools';
-const MCP_SERVER_LABEL = 'Chrome DevTools (UI Test Agent)';
+const MCP_SERVER_LABEL = 'UI Test Agent — Browser Engine';
 
 let mcpProviderRegistered = false;
 let mcpProviderError: string | undefined;
@@ -443,7 +443,7 @@ async function showMcpStatus(output: vscode.OutputChannel): Promise<void> {
 	if (mcpProviderError) {
 		lines.push('', `Last MCP error:     ${mcpProviderError}`);
 	}
-	output.appendLine('--- UI Test Agent MCP status ---');
+	output.appendLine('--- UI Test Agent — Browser Engine status ---');
 	for (const l of lines) {
 		output.appendLine(l);
 	}
@@ -451,20 +451,20 @@ async function showMcpStatus(output: vscode.OutputChannel): Promise<void> {
 	output.show(true);
 
 	const headline = !env.node.found
-		? 'Node.js was not found on PATH. The MCP server cannot start without it.'
+		? 'Node.js was not found on PATH. The browser engine cannot start without it.'
 		: !mcpProviderRegistered
-			? `Chrome DevTools MCP provider is NOT registered. ${mcpProviderError ?? 'See the UI Test Agent output channel.'}`
+			? `UI Test Agent’s browser engine is NOT registered. ${mcpProviderError ?? 'See the UI Test Agent output channel.'}`
 			: !env.chrome.found
-				? `MCP provider is registered. Chrome was not detected — first run will download a ~150 MB Chromium build.`
-				: `MCP provider is registered and Chrome was detected. Open "MCP: List Servers" to see "${MCP_SERVER_LABEL}".`;
+				? `Browser engine ready. Chrome was not detected — a portable Chromium build will be downloaded automatically on first run.`
+				: `Browser engine ready. Chrome was detected. Open "MCP: List Servers" if you want to inspect runtime details.`;
 
 	const choice = await vscode.window.showInformationMessage(
 		headline,
-		'MCP: List Servers',
+		'List Browser Engine',
 		'Show Output',
 		'Open Settings'
 	);
-	if (choice === 'MCP: List Servers') {
+	if (choice === 'List Browser Engine') {
 		await vscode.commands.executeCommand('workbench.mcp.listServer');
 	} else if (choice === 'Show Output') {
 		output.show(true);
@@ -478,20 +478,20 @@ async function showMcpStatus(output: vscode.OutputChannel): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function showFirstRunNotification(): void {
-	const mcpNote = mcpProviderRegistered
-		? ' Chrome DevTools MCP server is registered — open "MCP: List Servers" to verify.'
+	const engineNote = mcpProviderRegistered
+		? ' Built-in browser engine is ready.'
 		: '';
 	vscode.window
 		.showInformationMessage(
-			`UI Test Agent installed. The "UI Test" agent and 8 /ui-test-* prompts are ready in Copilot Chat.${mcpNote}`,
+			`UI Test Agent installed. The "UI Test" agent and 8 /ui-test-* prompts are ready in Copilot Chat.${engineNote} Requires an active GitHub Copilot subscription with Copilot Chat enabled.`,
 			'Show Usage',
-			'MCP Status',
+			'Browser Engine Status',
 			'Open Prompts Folder'
 		)
 		.then((choice) => {
 			if (choice === 'Show Usage') {
 				vscode.commands.executeCommand('uiTestAgent.showWelcome');
-			} else if (choice === 'MCP Status') {
+			} else if (choice === 'Browser Engine Status') {
 				vscode.commands.executeCommand('uiTestAgent.mcpStatus');
 			} else if (choice === 'Open Prompts Folder') {
 				vscode.commands.executeCommand('uiTestAgent.openPromptsFolder');
@@ -522,14 +522,21 @@ function welcomeHtml(): string {
   table { border-collapse: collapse; margin: 12px 0; }
   td, th { border: 1px solid var(--vscode-panel-border); padding: 6px 10px; text-align: left; }
   .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-size: 0.85em; }
+  .note { border-left: 3px solid var(--vscode-textLink-foreground); padding: 10px 14px; margin: 14px 0; background: var(--vscode-textBlockQuote-background); }
 </style>
 </head>
 <body>
 <h1>UI Test Agent <span class="pill">ready</span></h1>
-<p>An AI-powered, browser-driven QA specialist for VS Code Copilot Chat. Drives a real Chrome browser via the Chrome DevTools MCP and turns plain English into evidence-backed QA reports.</p>
+<p>Plain-English browser QA inside GitHub Copilot Chat. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile &mdash; with evidence-backed Markdown reports.</p>
+
+<div class="note">
+  <strong>Heads up:</strong> the agent runs on top of <strong>GitHub Copilot Chat in Agent Mode</strong>, so you need an active
+  <a href="https://github.com/features/copilot">GitHub Copilot</a> subscription (Individual, Business, Enterprise, or a Free trial)
+  with Copilot Chat installed and signed in. Without it, Copilot Chat is unavailable and the agent cannot run.
+</div>
 
 <h2>Try it now</h2>
-<p>Open <strong>Copilot Chat</strong> and try one of these:</p>
+<p>Open <strong>Copilot Chat</strong> (Agent Mode) and try one of these:</p>
 <pre>@UI Test  Test https://example.com on desktop, mobile, tablet</pre>
 <pre>/ui-test-smoke   url=https://example.com</pre>
 <pre>/ui-test-a11y    url=https://example.com</pre>
@@ -541,14 +548,15 @@ function welcomeHtml(): string {
   <tr><th>Type</th><th>Files</th></tr>
   <tr><td>Agent</td><td><code>ui-test.agent.md</code></td></tr>
   <tr><td>Prompts</td><td><code>/ui-test-smoke</code>, <code>/ui-test-a11y</code>, <code>/ui-test-perf</code>, <code>/ui-test-console</code>, <code>/ui-test-links</code>, <code>/ui-test-responsive</code>, <code>/ui-test-scaffold</code>, <code>/ui-test-run</code></td></tr>
-  <tr><td>MCP server</td><td><code>chrome-devtools-mcp</code> (auto-launched via npx)</td></tr>
+  <tr><td>Browser engine</td><td>Built-in &mdash; auto-configured. No setup required.</td></tr>
 </table>
 
 <h2>Requirements</h2>
 <ul>
-  <li><strong>Node.js 18+</strong> on PATH (so <code>npx</code> can launch the MCP server). <em>Required.</em></li>
-  <li><strong>Google Chrome</strong> installed. <em>Optional</em> — if missing, chrome-devtools-mcp will auto-download a ~150 MB Chromium build on first use. You can also set <code>uiTestAgent.chromeExecutablePath</code> to point at a custom Chrome / Edge.</li>
-  <li>VS Code <strong>1.101+</strong> with GitHub Copilot Chat enabled.</li>
+  <li><strong>GitHub Copilot subscription</strong> with <strong>Copilot Chat</strong> enabled and signed in. <em>Required.</em></li>
+  <li>VS Code <strong>1.101+</strong>.</li>
+  <li><strong>Node.js 18+</strong> on PATH. <em>Required.</em></li>
+  <li><strong>Google Chrome / Chromium / Edge</strong> installed (auto-detected). <em>Optional</em> &mdash; if missing, a portable Chromium build is downloaded automatically on first use. You can also set <code>uiTestAgent.chromeExecutablePath</code> to point at a custom browser.</li>
 </ul>
 
 <h2>Commands</h2>
@@ -556,8 +564,8 @@ function welcomeHtml(): string {
   <li><code>UI Test Agent: Install / Update Prompt Files</code></li>
   <li><code>UI Test Agent: Open Prompts Folder</code></li>
   <li><code>UI Test Agent: Remove Installed Prompt Files</code></li>
-  <li><code>UI Test Agent: Show Chrome DevTools MCP Status</code></li>
-  <li><code>UI Test Agent: Check Environment (Node.js + Chrome)</code></li>
+  <li><code>UI Test Agent: Show Browser Engine Status</code></li>
+  <li><code>UI Test Agent: Check Environment</code></li>
 </ul>
 </body>
 </html>`;
@@ -720,8 +728,8 @@ async function runEnvironmentProbe(
 
 	const isFatal = !env.node.found || !env.npx.found;
 	const message = isFatal
-		? `UI Test Agent: ${issues.join(' and ')} not found on PATH. The Chrome DevTools MCP server cannot start without Node.js and npx.`
-		: `UI Test Agent: Chrome was not detected. The MCP server will auto-download a ~150 MB Chromium build on first use, or you can install Chrome / set a path in settings.`;
+		? `UI Test Agent: ${issues.join(' and ')} not found on PATH. The agent’s browser engine cannot start without Node.js and npx.`
+		: `UI Test Agent: Chrome was not detected. A portable Chromium build will be downloaded automatically on first use, or you can install Chrome / set a path in settings.`;
 
 	const installChromeAction = 'Install Chrome';
 	const installNodeAction = 'Install Node.js';
