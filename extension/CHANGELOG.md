@@ -5,8 +5,8 @@ All notable changes to the **UI Test Agent** extension are documented in this fi
 ## [0.3.2] - 2026-05-05
 
 ### Fixed
-- **False-negative "npx not found" warning on Windows.** The environment probe now tries every plausible npx shim filename (`npx.cmd`, `npx.exe`, `npx.ps1`, plain `npx`), falls back to a shell-based lookup so `PATHEXT` is honored, and as a last resort scans the directory next to the resolved `node` binary. This fixes spurious warnings under Volta, fnm, and nvm-windows where the official `.cmd` shim isn't present.
-- **Less alarming messaging when only npx auto-detection fails.** A missing-npx-but-Node-present probe is treated as advisory, not fatal. VS Code's own MCP launch path is more lenient than the probe and will usually succeed anyway. The notification now suggests restarting VS Code from a fresh terminal instead of warning that the engine "cannot start".
+- **No more spurious "npx not found" warning.** The probe still records npx detection in the diagnostic log, but it no longer raises a user-facing notification. npx ships with Node \u2265 7, so if Node is detected we trust the launch path \u2014 VS Code's MCP spawn uses a shell and is more lenient than our probe (different shim filenames across Volta / fnm / nvm-windows, PATHEXT, stale PATH in already-running VS Code processes). Only **missing Node.js** is now treated as fatal.
+- **More robust npx detection (still kept for diagnostics).** Tries every plausible Windows shim filename (`npx.cmd`, `npx.exe`, `npx.ps1`, plain `npx`), falls back to a shell-based lookup so `PATHEXT` is honored, and as a last resort scans the directory next to the resolved `node` binary.
 
 ## [0.3.1] - 2026-05-05
 

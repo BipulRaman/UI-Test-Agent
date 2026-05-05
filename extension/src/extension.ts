@@ -813,43 +813,34 @@ async function runEnvironmentProbe(
 			`chrome=${env.chrome.found ? env.chrome.path : 'missing'}`
 	);
 
-	if (env.node.found && env.npx.found && env.chrome.found) {
+	// We deliberately do NOT raise a notification when only npx auto-detection
+	// fails. npx ships with Node ≥ 7, so if Node is present we trust the launch
+	// path — VS Code's MCP spawn uses a shell that is more lenient than our
+	// probe (different shim filenames across Volta / fnm / nvm-windows, PATHEXT,
+	// stale PATH in already-running VS Code processes, etc.). Bothering the user
+	// with a warning that we can't even act on is worse than silence.
+	if (env.node.found && env.chrome.found) {
 		return;
 	}
 	if (context.globalState.get<boolean>(ENV_WARN_KEY)) {
 		return; // user already dismissed
 	}
 
-	const issues: string[] = [];
-	if (!env.node.found) {
-		issues.push('Node.js');
-	}
-	if (!env.npx.found && env.node.found) {
-		issues.push('npx');
-	}
-	if (!env.chrome.found) {
-		issues.push('Chrome');
-	}
-
-	// Only treat *missing Node* as fatal. A missing-npx-but-Node-present probe is
-	// almost always a false negative (different shim names across Node
-	// distributions, PATHEXT not honored by execFile, VS Code launched before a
-	// new shell session refreshed PATH). VS Code's own MCP launch uses a shell
-	// and is more lenient than our probe — so warn, don't block.
-	const isFatal = !env.node.found;
+	// Only Node missing is fatal. Chrome missing is informational — a portable
+	// Chromium will be downloaded on first use.
 	const nodeMissing = !env.node.found;
-	const npxOnly = env.node.found && !env.npx.found;
+	const chromeMissing = !env.chrome.found;
 
 	let message: string;
-	if (nodeMissing) {
-		message = `UI Test Agent: Node.js was not found on PATH. The agent’s browser engine cannot start without it.`;
-	} else if (npxOnly && !env.chrome.found) {
-		message = `UI Test Agent: couldn’t auto-detect npx and Chrome. The browser engine may still launch — if it doesn’t, install/refresh PATH for npx and install Chrome (or set a custom path in settings).`;
-	} else if (npxOnly) {
-		message = `UI Test Agent: couldn’t auto-detect npx on PATH (Node.js was found). VS Code may still resolve it at launch time. If the agent fails to start, restart VS Code from a fresh terminal so the PATH includes your Node install.`;
+	if (nodeMissing && chromeMissing) {
+		message = `UI Test Agent: Node.js was not detected on PATH (and Chrome wasn’t found either). Install Node.js to enable the agent’s browser engine.`;
+	} else if (nodeMissing) {
+		message = `UI Test Agent: Node.js was not detected on PATH. The agent’s browser engine cannot start without it.`;
 	} else {
-		message = `UI Test Agent: Chrome was not detected. A portable Chromium build will be downloaded automatically on first use, or you can install Chrome / set a path in settings.`;
+		message = `UI Test Agent: Chrome was not detected. A portable Chromium build will be downloaded automatically on first use, or you can install Chrome / set a custom path in settings.`;
 	}
+
+	const isFatal = nodeMissing;
 
 	const installChromeAction = 'Install Chrome';
 	const installNodeAction = 'Install Node.js';

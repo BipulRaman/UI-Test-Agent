@@ -2,22 +2,27 @@ name: Publish VS Code Extension
 
 # Publishes the UI Test Agent extension to the Visual Studio Marketplace.
 #
-# Triggers
-# --------
-#  * Push a tag like  v0.3.1  (or  release-v0.3.1)  -> builds + publishes the version
-#    declared in extension/package.json. Tag must match package.json version.
-#  * Manual run via the Actions tab ("Run workflow")
-#       - dry_run = true  -> only build + upload .vsix artifact (no publish)
-#       - dry_run = false -> build + publish to the Marketplace
-#
 # Versioning policy
 # -----------------
-#  This workflow NEVER bumps the version in CI. Bump locally with
-#       cd extension
-#       npm version patch    # or minor / major
-#       cd ..
-#       git push --follow-tags
-#  This guarantees package.json, the git tag, and the artifact filename all agree.
+#  The MARKETPLACE is the source of truth for the version, NOT package.json.
+#  On every publish we:
+#    1. Query the Marketplace for the latest published version of
+#       BipulRaman.ui-test-agent.
+#    2. Bump it (patch by default, or minor/major via workflow_dispatch input,
+#       or via [minor] / [major] in the commit message on push).
+#    3. Write the new version into package.json IN THE RUNNER ONLY (never
+#       committed back to git).
+#    4. Package + publish.
+#  This means package.json's version in the repo is essentially decorative
+#  and you never have to bump it locally or push tags.
+#
+# Triggers
+# --------
+#  * Push to main that touches extension/** (auto-publish, patch bump).
+#    To skip a publish, include "[skip publish]" anywhere in the commit message.
+#    To request a non-patch bump, include "[minor]" or "[major]".
+#  * Manual run via the Actions tab ("Run workflow") with explicit bump type
+#    and dry_run option.
 #
 # Required repository secret
 # --------------------------
@@ -28,11 +33,21 @@ name: Publish VS Code Extension
 
 on:
   push:
-    tags:
-      - "v*.*.*"
-      - "release-v*.*.*"
+    branches:
+      - main
+    paths:
+      - "extension/**"
+      - ".github/workflows/publish-extension.yml"
   workflow_dispatch:
     inputs:
+      bump:
+        description: "Version bump (relative to the latest published version)"
+        type: choice
+        default: "patch"
+        options:
+          - patch
+          - minor
+          - major
       dry_run:
         description: "Dry run (build .vsix only, do not publish)"
         type: boolean
@@ -40,6 +55,12 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  # Only one publish at a time, queue subsequent ones (don't cancel them \u2014
+  # canceling mid-publish could leave the Marketplace in a weird state).
+  group: publish-extension
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -53,7 +74,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Decide whether to publish
+        id: gate
+        run: |
+          # On push, allow opting out via "[skip publish]" in the commit message.
+          if [ "${{ github.event_name }}" = "push" ]; then
+            MSG=$(git -C "$GITHUB_WORKSPACE" log -1 --pretty=%B)
+            if echo "$MSG" | grep -qiE '\[skip[ -]?(publish|ci)\]'; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Commit message requests skip; not publishing."
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node.js
+        if: steps.gate.outputs.skip == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -61,6 +97,7 @@ jobs:
           cache-dependency-path: extension/package-lock.json
 
       - name: Install dependencies
+        if: steps.gate.outputs.skip == 'false'
         run: |
           if [ -f package-lock.json ]; then
             npm ci
@@ -69,44 +106,30 @@ jobs:
           fi
 
       - name: Compile TypeScript
+        if: steps.gate.outputs.skip == 'false'
         run: npm run compile
 
-      - name: Read extension version
-        id: ver
+      - name: Read publisher and extension name
+        if: steps.gate.outputs.skip == 'false'
+        id: meta
         run: |
-          VERSION=$(node -p "require('./package.json').version")
           NAME=$(node -p "require('./package.json').name")
           PUBLISHER=$(node -p "require('./package.json').publisher")
-          echo "version=$VERSION"     >> "$GITHUB_OUTPUT"
           echo "name=$NAME"           >> "$GITHUB_OUTPUT"
           echo "publisher=$PUBLISHER" >> "$GITHUB_OUTPUT"
-          echo "Extension: $PUBLISHER.$NAME @ $VERSION"
-
-      - name: Verify tag matches package.json version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          TAG="${GITHUB_REF_NAME#release-}"   # strip optional 'release-' prefix
-          TAG="${TAG#v}"                      # strip leading 'v'
-          PKG="${{ steps.ver.outputs.version }}"
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::Tag version ($TAG) does not match extension/package.json version ($PKG)."
-            echo "Update package.json or re-tag, then push again."
-            exit 1
-          fi
-          echo "Tag and package.json agree on version $PKG."
+          echo "Extension: $PUBLISHER.$NAME"
 
       - name: Validate VSCE_PAT (fail-fast on bad credentials)
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        if: steps.gate.outputs.skip == 'false' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false))
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-          PUBLISHER: ${{ steps.ver.outputs.publisher }}
+          PUBLISHER: ${{ steps.meta.outputs.publisher }}
         run: |
           if [ -z "${VSCE_PAT}" ]; then
             echo "::error::Repository secret VSCE_PAT is not set."
             echo "::error::Add it under Settings -> Secrets and variables -> Actions."
             exit 1
           fi
-
           echo "Checking PAT against publisher '$PUBLISHER'..."
           if ! npx --yes @vscode/vsce verify-pat "$PUBLISHER" --pat "$VSCE_PAT"; then
             echo "::error::VSCE_PAT failed verification for publisher '$PUBLISHER' (HTTP 401)."
@@ -116,50 +139,135 @@ jobs:
             echo "::error::  3) PAT is expired (Azure DevOps PATs default to 30 days)."
             echo "::error::  4) PAT belongs to a different Microsoft account than the one that owns the publisher."
             echo "::error::  5) Publisher '$PUBLISHER' does not exist at https://marketplace.visualstudio.com/manage."
-            echo "::error::See extension/PUBLISHING.md section 1 for full setup."
             exit 1
           fi
-          echo "PAT is valid for publisher '$PUBLISHER'."
+          echo "PAT is valid."
+
+      - name: Resolve next version from Marketplace
+        if: steps.gate.outputs.skip == 'false'
+        id: ver
+        env:
+          PUBLISHER: ${{ steps.meta.outputs.publisher }}
+          NAME: ${{ steps.meta.outputs.name }}
+        run: |
+          # ---------- Determine bump type ----------
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            BUMP="${{ inputs.bump }}"
+          else
+            MSG=$(git -C "$GITHUB_WORKSPACE" log -1 --pretty=%B)
+            if   echo "$MSG" | grep -qiE '\[major\]'; then BUMP=major
+            elif echo "$MSG" | grep -qiE '\[minor\]'; then BUMP=minor
+            else BUMP=patch
+            fi
+          fi
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+          echo "Bump type: $BUMP"
+
+          # ---------- Query Marketplace for current version ----------
+          # Use the public Marketplace REST API (no auth required for read).
+          API_URL="https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
+          BODY=$(printf '{"filters":[{"criteria":[{"filterType":7,"value":"%s.%s"}]}],"flags":914}' "$PUBLISHER" "$NAME")
+
+          RESP=$(curl -fsS -X POST "$API_URL" \
+            -H "Accept: application/json;api-version=3.0-preview.1" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" || echo '')
+
+          CURRENT=""
+          if [ -n "$RESP" ]; then
+            CURRENT=$(echo "$RESP" | node -e "
+              let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{
+                try {
+                  const j=JSON.parse(s);
+                  const exts=(j.results&&j.results[0]&&j.results[0].extensions)||[];
+                  if(!exts.length){console.log('');return;}
+                  const versions=exts[0].versions||[];
+                  // versions[0] is the most recently published
+                  console.log((versions[0]&&versions[0].version)||'');
+                } catch { console.log(''); }
+              });
+            ")
+          fi
+
+          if [ -z "$CURRENT" ]; then
+            # First-ever publish: seed from package.json (or 0.0.0 if absent).
+            CURRENT=$(node -p "require('./package.json').version || '0.0.0'")
+            echo "::warning::Marketplace returned no published versions; seeding from package.json ($CURRENT)."
+            # For a first-ever publish we want to publish the seed AS-IS, not bump it.
+            NEXT="$CURRENT"
+          else
+            NEXT=$(node -e "
+              const cur='$CURRENT'.split('.').map(Number);
+              const bump='$BUMP';
+              if(bump==='major'){cur[0]+=1;cur[1]=0;cur[2]=0;}
+              else if(bump==='minor'){cur[1]+=1;cur[2]=0;}
+              else{cur[2]+=1;}
+              console.log(cur.join('.'));
+            ")
+          fi
+
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT"       >> "$GITHUB_OUTPUT"
+          echo "Latest on Marketplace: ${CURRENT:-<none>}"
+          echo "Will publish:          $NEXT"
+
+      - name: Apply version to package.json (runner only, not committed)
+        if: steps.gate.outputs.skip == 'false'
+        run: |
+          node -e "
+            const fs=require('fs');
+            const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.version='${{ steps.ver.outputs.next }}';
+            fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n');
+          "
+          echo "package.json version is now $(node -p "require('./package.json').version")"
 
       - name: Package .vsix
-        run: npx --yes @vscode/vsce package --out "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
+        if: steps.gate.outputs.skip == 'false'
+        run: npx --yes @vscode/vsce package --out "ui-test-agent-${{ steps.ver.outputs.next }}.vsix"
 
       - name: Upload .vsix artifact
+        if: steps.gate.outputs.skip == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: ui-test-agent-${{ steps.ver.outputs.version }}-vsix
-          path: extension/ui-test-agent-${{ steps.ver.outputs.version }}.vsix
+          name: ui-test-agent-${{ steps.ver.outputs.next }}-vsix
+          path: extension/ui-test-agent-${{ steps.ver.outputs.next }}.vsix
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish to Visual Studio Marketplace
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        if: steps.gate.outputs.skip == 'false' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false))
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          echo "Publishing the prebuilt .vsix as-is (no version bump in CI)."
+          echo "Publishing ${{ steps.meta.outputs.publisher }}.${{ steps.meta.outputs.name }} v${{ steps.ver.outputs.next }}"
           npx --yes @vscode/vsce publish \
             --pat "$VSCE_PAT" \
-            --packagePath "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
+            --packagePath "ui-test-agent-${{ steps.ver.outputs.next }}.vsix"
 
       - name: Summary
-        if: always()
+        if: always() && steps.gate.outputs.skip == 'false'
         run: |
           {
             echo "### UI Test Agent — Marketplace publish"
             echo ""
             echo "| Field | Value |"
             echo "|---|---|"
-            echo "| Publisher | \`${{ steps.ver.outputs.publisher }}\` |"
-            echo "| Extension | \`${{ steps.ver.outputs.name }}\` |"
-            echo "| Version   | \`${{ steps.ver.outputs.version }}\` |"
-            echo "| Trigger   | \`${{ github.event_name }}\` |"
-            echo "| Ref       | \`${{ github.ref }}\` |"
+            echo "| Publisher          | \`${{ steps.meta.outputs.publisher }}\` |"
+            echo "| Extension          | \`${{ steps.meta.outputs.name }}\` |"
+            echo "| Previous version   | \`${{ steps.ver.outputs.current }}\` |"
+            echo "| Bump type          | \`${{ steps.ver.outputs.bump }}\` |"
+            echo "| New version        | \`${{ steps.ver.outputs.next }}\` |"
+            echo "| Trigger            | \`${{ github.event_name }}\` |"
             if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-              echo "| Mode      | Dry run (artifact only) |"
+              echo "| Mode               | Dry run (artifact only) |"
             else
-              echo "| Mode      | Published to Marketplace |"
+              echo "| Mode               | Published to Marketplace |"
               echo ""
-              echo "View listing: <https://marketplace.visualstudio.com/items?itemName=${{ steps.ver.outputs.publisher }}.${{ steps.ver.outputs.name }}>"
+              echo "View listing: <https://marketplace.visualstudio.com/items?itemName=${{ steps.meta.outputs.publisher }}.${{ steps.meta.outputs.name }}>"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Skip summary
+        if: steps.gate.outputs.skip == 'true'
+        run: echo "Publish was skipped per commit message ([skip publish] / [skip ci])." >> "$GITHUB_STEP_SUMMARY"
