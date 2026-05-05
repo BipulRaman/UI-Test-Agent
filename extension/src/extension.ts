@@ -593,13 +593,95 @@ async function detectEnvironment(force = false): Promise<EnvStatus> {
 	if (cachedEnv && !force) {
 		return cachedEnv;
 	}
-	const [node, npx, chrome] = await Promise.all([
-		detectVersion(process.platform === 'win32' ? 'node.exe' : 'node', ['--version']),
-		detectVersion(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['--version']),
+	const [node, chrome] = await Promise.all([
+		detectNode(),
 		detectChrome()
 	]);
+	const npx = await detectNpx(node);
 	cachedEnv = { node, npx, chrome };
 	return cachedEnv;
+}
+
+async function detectNode(): Promise<ToolStatus> {
+	// Try the conventional binary first; fall back to shell lookup so PATHEXT etc. is honored.
+	const direct = await detectVersion(process.platform === 'win32' ? 'node.exe' : 'node', ['--version']);
+	let result = direct.found ? direct : await detectViaShell('node', ['--version']);
+	if (result.found && !result.path) {
+		result = { ...result, path: (await resolveExecutablePath('node')) || undefined };
+	}
+	return result;
+}
+
+/**
+ * Resolve the full path of an executable on PATH using the platform's lookup
+ * tool (`where` on Windows, `which` everywhere else). Returns undefined when
+ * not found. Only used to enable the adjacent-binary fallback for npx detection.
+ */
+async function resolveExecutablePath(name: string): Promise<string | undefined> {
+	const cmd = process.platform === 'win32' ? 'where' : 'which';
+	try {
+		const { stdout } = await execFileAsync(cmd, [name], {
+			timeout: 2000,
+			windowsHide: true,
+			shell: false
+		});
+		const first = stdout.toString().split(/\r?\n/).find((line) => line.trim().length > 0);
+		return first ? first.trim() : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * npx detection is fiddly because different Node distributions ship different
+ * shim filenames on Windows:
+ *   - Official Node installer:  npx.cmd
+ *   - Volta:                    npx.exe
+ *   - fnm:                      npx.ps1 (no .cmd!)
+ *   - nvm-windows (some ver.):  npx (no extension)
+ * On top of that, `execFile` with shell:false does NOT honor PATHEXT, so a
+ * single-name lookup misses real installs. We try every plausible variant,
+ * then fall back to a shell lookup, then to `<node-dir>/npx*` adjacent to the
+ * detected `node` binary.
+ */
+async function detectNpx(node: ToolStatus): Promise<ToolStatus> {
+	const candidates = process.platform === 'win32'
+		? ['npx.cmd', 'npx.exe', 'npx.ps1', 'npx']
+		: ['npx'];
+	for (const c of candidates) {
+		const hit = await detectVersion(c, ['--version']);
+		if (hit.found) {
+			return hit;
+		}
+	}
+
+	// Shell fallback — lets the OS resolve PATHEXT and aliases.
+	const viaShell = await detectViaShell('npx', ['--version']);
+	if (viaShell.found) {
+		return viaShell;
+	}
+
+	// Last resort: look adjacent to the resolved `node` binary.
+	if (node.found && node.path) {
+		const dir = path.dirname(node.path);
+		const neighborNames = process.platform === 'win32'
+			? ['npx.cmd', 'npx.exe', 'npx.ps1', 'npx']
+			: ['npx'];
+		for (const name of neighborNames) {
+			const candidate = path.join(dir, name);
+			if (existsSync(candidate)) {
+				const hit = await detectVersion(candidate, ['--version']);
+				if (hit.found) {
+					return { ...hit, path: candidate };
+				}
+				// Even if we couldn't run it (e.g. .ps1 needs PowerShell host), report
+				// presence so we don't scare the user with a false negative.
+				return { found: true, path: candidate };
+			}
+		}
+	}
+
+	return { found: false };
 }
 
 async function detectVersion(cmd: string, args: string[]): Promise<ToolStatus> {
@@ -610,6 +692,29 @@ async function detectVersion(cmd: string, args: string[]): Promise<ToolStatus> {
 			shell: false
 		});
 		return { found: true, version: stdout.toString().trim() };
+	} catch {
+		return { found: false };
+	}
+}
+
+/**
+ * Run a command via the platform shell so PATHEXT / aliases / shims are
+ * resolved the same way they would be from a normal terminal. Used as a
+ * second-chance lookup when direct execFile fails.
+ */
+async function detectViaShell(cmd: string, args: string[]): Promise<ToolStatus> {
+	try {
+		const joined = [cmd, ...args].join(' ');
+		const { stdout } = await execFileAsync(joined, [], {
+			timeout: 3000,
+			windowsHide: true,
+			shell: true
+		});
+		const out = stdout.toString().trim();
+		if (out.length === 0) {
+			return { found: false };
+		}
+		return { found: true, version: out };
 	} catch {
 		return { found: false };
 	}
@@ -726,10 +831,25 @@ async function runEnvironmentProbe(
 		issues.push('Chrome');
 	}
 
-	const isFatal = !env.node.found || !env.npx.found;
-	const message = isFatal
-		? `UI Test Agent: ${issues.join(' and ')} not found on PATH. The agent’s browser engine cannot start without Node.js and npx.`
-		: `UI Test Agent: Chrome was not detected. A portable Chromium build will be downloaded automatically on first use, or you can install Chrome / set a path in settings.`;
+	// Only treat *missing Node* as fatal. A missing-npx-but-Node-present probe is
+	// almost always a false negative (different shim names across Node
+	// distributions, PATHEXT not honored by execFile, VS Code launched before a
+	// new shell session refreshed PATH). VS Code's own MCP launch uses a shell
+	// and is more lenient than our probe — so warn, don't block.
+	const isFatal = !env.node.found;
+	const nodeMissing = !env.node.found;
+	const npxOnly = env.node.found && !env.npx.found;
+
+	let message: string;
+	if (nodeMissing) {
+		message = `UI Test Agent: Node.js was not found on PATH. The agent’s browser engine cannot start without it.`;
+	} else if (npxOnly && !env.chrome.found) {
+		message = `UI Test Agent: couldn’t auto-detect npx and Chrome. The browser engine may still launch — if it doesn’t, install/refresh PATH for npx and install Chrome (or set a custom path in settings).`;
+	} else if (npxOnly) {
+		message = `UI Test Agent: couldn’t auto-detect npx on PATH (Node.js was found). VS Code may still resolve it at launch time. If the agent fails to start, restart VS Code from a fresh terminal so the PATH includes your Node install.`;
+	} else {
+		message = `UI Test Agent: Chrome was not detected. A portable Chromium build will be downloaded automatically on first use, or you can install Chrome / set a path in settings.`;
+	}
 
 	const installChromeAction = 'Install Chrome';
 	const installNodeAction = 'Install Node.js';
