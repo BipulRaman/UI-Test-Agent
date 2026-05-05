@@ -2,7 +2,7 @@
   "name": "ui-test-agent",
   "displayName": "UI Test Agent",
   "description": "Plain-English browser QA inside Copilot Chat. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile — with evidence-backed Markdown reports. Zero config.",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publisher": "BipulRaman",
   "license": "MIT",
   "icon": "media/icon.png",

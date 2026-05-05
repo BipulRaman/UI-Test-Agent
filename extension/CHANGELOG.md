@@ -2,6 +2,11 @@
 
 All notable changes to the **UI Test Agent** extension are documented in this file.
 
+## [0.3.3] - 2026-05-05
+
+### Fixed
+- **Agent can now actually use the browser tools.** The bundled `chrome-devtools-mcp` server was being registered with the friendly label `"UI Test Agent — Browser Engine"`, which VS Code then used as the MCP server *name* when namespacing tools (so they were exposed as `mcp_ui_test_agent_*`). The `ui-test.agent.md` file restricts tools to `chrome-devtools/*`, so the wildcard matched **zero** tools and the agent reported "Chrome DevTools MCP tools are not available" — refusing to navigate, snapshot, emulate, or run Lighthouse. Renamed the registered server to `chrome-devtools` (matching both the upstream package's canonical config name and the agent file's wildcard). The friendly display string is preserved separately and still appears in status output, notifications, and the welcome page. **After updating, run `MCP: Reset Cached Tools` (or restart VS Code) so VS Code re-discovers the server under its new name.**
+
 ## [0.3.2] - 2026-05-05
 
 ### Fixed

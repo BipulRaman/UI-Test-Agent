@@ -319,7 +319,18 @@ async function openPromptsFolder(context: vscode.ExtensionContext): Promise<void
 // ---------------------------------------------------------------------------
 
 const MCP_PROVIDER_ID = 'uiTestAgent.chromeDevTools';
-const MCP_SERVER_LABEL = 'UI Test Agent — Browser Engine';
+// IMPORTANT: this label is what VS Code uses as the MCP "server name" when it
+// namespaces the server's tools (e.g. it becomes the prefix in `mcp_<name>_*`
+// and is what the `tools: ['<name>/*']` wildcard in `ui-test.agent.md` matches
+// against). It MUST stay as `chrome-devtools` so the agent file's
+// `tools: ['chrome-devtools/*', ...]` filter actually matches the MCP tools
+// exposed by `chrome-devtools-mcp`. Do NOT change this to a friendlier display
+// string — that breaks the wildcard and the agent loses access to the browser
+// tools at runtime (symptom: agent claims navigate_page / take_snapshot /
+// lighthouse_audit / emulate are unavailable). Use MCP_SERVER_DISPLAY_NAME for
+// user-facing strings instead.
+const MCP_SERVER_LABEL = 'chrome-devtools';
+const MCP_SERVER_DISPLAY_NAME = 'UI Test Agent — Browser Engine';
 
 let mcpProviderRegistered = false;
 let mcpProviderError: string | undefined;
@@ -426,7 +437,8 @@ async function showMcpStatus(output: vscode.OutputChannel): Promise<void> {
 
 	const lines: string[] = [
 		`Provider id:        ${MCP_PROVIDER_ID}`,
-		`Server label:       ${MCP_SERVER_LABEL}`,
+		`Server name:        ${MCP_SERVER_LABEL}    (matches tools: ['${MCP_SERVER_LABEL}/*'] in ui-test.agent.md)`,
+		`Display name:       ${MCP_SERVER_DISPLAY_NAME}`,
 		`Setting enabled:    ${enabledSetting}`,
 		`Provider registered: ${mcpProviderRegistered}`,
 		`Package:            chrome-devtools-mcp@${versionTag}`,
@@ -443,7 +455,7 @@ async function showMcpStatus(output: vscode.OutputChannel): Promise<void> {
 	if (mcpProviderError) {
 		lines.push('', `Last MCP error:     ${mcpProviderError}`);
 	}
-	output.appendLine('--- UI Test Agent — Browser Engine status ---');
+	output.appendLine(`--- ${MCP_SERVER_DISPLAY_NAME} status ---`);
 	for (const l of lines) {
 		output.appendLine(l);
 	}
