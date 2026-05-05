@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UI Test Agent — AI-powered browser QA in VS Code Copilot Chat</title>
+  <meta name="description" content="UI Test Agent is a VS Code extension that turns plain English into evidence-backed QA reports. Smoke, accessibility, performance, console, link, and responsive checks across desktop, tablet, and mobile — driven by a real Chrome browser via Chrome DevTools MCP." />
+  <meta name="theme-color" content="#0b1020" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="UI Test Agent — AI-powered browser QA in VS Code" />
+  <meta property="og:description" content="Plain English in. Evidence-backed QA reports out. One install registers the agent, 8 prompts, and the Chrome DevTools MCP server." />
+  <meta property="og:url" content="https://github.com/BipulRaman/UI-Test-Agent" />
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" role="banner">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="UI Test Agent home">
+        <img src="assets/favicon.svg" alt="" width="28" height="28" />
+        <span>UI Test Agent</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#quickstart">Quick start</a>
+        <a href="#install">Install</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <button id="themeToggle" class="icon-btn" aria-label="Toggle color theme" title="Toggle color theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66l1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14l-1.41-1.41M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+        </button>
+        <a class="btn btn-ghost" href="https://github.com/BipulRaman/UI-Test-Agent" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn btn-primary" href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">Install</a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" id="top">
+      <div class="bg-grid" aria-hidden="true"></div>
+      <div class="bg-glow" aria-hidden="true"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">VS Code · Copilot Chat · Agent Mode</span>
+          <h1>Browser QA in plain English.<br /><span class="grad">Evidence-backed reports.</span></h1>
+          <p class="lede">
+            UI Test Agent drives a real Chrome browser from inside Copilot Chat. Ask it to smoke-test, audit accessibility, check performance, scan links, or verify responsive layouts — and get back a Markdown report with screenshots, Lighthouse scores, console errors, and failed requests.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M17.86 2.51L8.6 11.25 4.78 8.32 2 9.66l5.16 4.83L2 19.32l2.78 1.34 3.82-2.93 9.26 8.74L22 24V0l-4.14 2.51zm0 4.94v9.1l-6.04-4.55 6.04-4.55z"/></svg>
+              Install from Marketplace
+            </a>
+            <a class="btn btn-ghost btn-lg" href="https://github.com/BipulRaman/UI-Test-Agent" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M12 .5a11.5 11.5 0 00-3.64 22.41c.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.39.97.1-.75.4-1.27.74-1.56-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.3-.52-1.49.11-3.1 0 0 .97-.31 3.18 1.18a11 11 0 015.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.61.23 2.8.11 3.1.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.13v3.16c0 .31.2.68.8.56A11.5 11.5 0 0012 .5z"/></svg>
+              View on GitHub
+            </a>
+          </div>
+          <ul class="hero-meta">
+            <li><strong>0</strong> config files</li>
+            <li><strong>1</strong> click install</li>
+            <li><strong>8</strong> ready-made prompts</li>
+            <li><strong>6</strong> device profiles</li>
+          </ul>
+        </div>
+
+        <div class="hero-card">
+          <div class="terminal" role="img" aria-label="Example Copilot Chat conversation with the UI Test agent">
+            <div class="terminal-bar">
+              <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+              <span class="terminal-title">Copilot Chat — Agent Mode</span>
+            </div>
+            <div class="terminal-body">
+              <p class="line user"><span class="prompt">@UI Test</span> Test https://example.com on desktop, mobile, tablet</p>
+              <p class="line agent"><span class="tag">scope</span> 3 devices · smoke + console + a11y · 1 URL</p>
+              <p class="line agent"><span class="tag">chrome</span> launching headless via chrome-devtools-mcp…</p>
+              <p class="line agent"><span class="tag ok">pass</span> desktop · 200 OK · TTFB 142ms · 0 console errors</p>
+              <p class="line agent"><span class="tag ok">pass</span> tablet · 200 OK · LCP 1.4s · a11y 0.96</p>
+              <p class="line agent"><span class="tag warn">warn</span> mobile · touch-target 44×44 violation × 2</p>
+              <p class="line agent"><span class="tag">report</span> ./.ui-tests/reports/example-com.md</p>
+              <span class="caret" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Why it's different</span>
+          <h2>Built for the Copilot Chat workflow you already use</h2>
+          <p>No new DSL. No bespoke runner. Just plain English in your editor — with real Chrome doing the work.</p>
+        </header>
+
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 4a6 6 0 016 6h-2a4 4 0 00-4-4V6z"/></svg>
+            </div>
+            <h3>Real Chrome, real results</h3>
+            <p>Drives the official <code>chrome-devtools-mcp</code> server so every check runs against a real browser — not a simulation.</p>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 3h18v4H3V3zm0 7h18v4H3v-4zm0 7h18v4H3v-4z"/></svg>
+            </div>
+            <h3>Eight first-class workflows</h3>
+            <p>Smoke, console, a11y, performance, links, responsive, scaffold, and bulk-run — each a one-line slash command.</p>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M4 4h16v4H4V4zm0 6h10v4H4v-4zm0 6h16v4H4v-4z"/></svg>
+            </div>
+            <h3>Markdown-native test cases</h3>
+            <p>Scaffolded suites are plain <code>.ui-test.md</code> files — diff-friendly, PR-friendly, agent-readable.</p>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M21 6h-7l-2-2H3v14h18V6zM5 16V8h14v8H5z"/></svg>
+            </div>
+            <h3>Zero MCP setup</h3>
+            <p>The extension registers the Chrome DevTools MCP server automatically. No <code>mcp.json</code> editing required.</p>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 1L3 5v6c0 5 3.8 9.7 9 11 5.2-1.3 9-6 9-11V5l-9-4zm-1 15l-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z"/></svg>
+            </div>
+            <h3>Read-only on your code</h3>
+            <p>The agent can scaffold tests and write reports — but it cannot touch your application source. Ever.</p>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M17 1H7a2 2 0 00-2 2v18a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zm-5 20a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5-4H7V4h10v13z"/></svg>
+            </div>
+            <h3>Six device profiles</h3>
+            <p>Fan out a single check across <code>desktop · desktopHD · tablet · tabletLand · mobile · mobileSm</code> with throttling.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOWS -->
+    <section class="section section-alt" id="workflows">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">The prompt library</span>
+          <h2>Eight workflows. One agent.</h2>
+          <p>Every prompt accepts free-text refinements (focus, devices, depth) and emits a Markdown report.</p>
+        </header>
+
+        <div class="workflow-grid">
+          <article class="workflow"><h3><code>/ui-test-smoke</code></h3><p>Page load, title, no console errors, no 5xx.</p></article>
+          <article class="workflow"><h3><code>/ui-test-console</code></h3><p>Runtime console + network health — flag every error and failed request.</p></article>
+          <article class="workflow"><h3><code>/ui-test-a11y</code></h3><p>Lighthouse accessibility category with WCAG / axe rule violations.</p></article>
+          <article class="workflow"><h3><code>/ui-test-perf</code></h3><p>Lighthouse performance plus Core Web Vitals (LCP, INP, CLS).</p></article>
+          <article class="workflow"><h3><code>/ui-test-links</code></h3><p>Same-origin link health and shallow crawl, capped at 25 pages by default.</p></article>
+          <article class="workflow"><h3><code>/ui-test-responsive</code></h3><p>Overflow, layout, and touch-target audit across breakpoints.</p></article>
+          <article class="workflow"><h3><code>/ui-test-scaffold</code></h3><p>Bootstrap a committable <code>.ui-tests/</code> suite with starter cases.</p></article>
+          <article class="workflow"><h3><code>/ui-test-run</code></h3><p>Bulk-run a folder of <code>*.ui-test.md</code> cases with filters.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK START -->
+    <section class="section" id="quickstart">
+      <div class="container quick-grid">
+        <div>
+          <span class="eyebrow">Quick start</span>
+          <h2>Three steps to your first report</h2>
+          <ol class="steps">
+            <li><strong>Install</strong> the extension from the VS Code Marketplace.</li>
+            <li><strong>Open</strong> GitHub Copilot Chat in VS Code 1.101 or newer.</li>
+            <li><strong>Ask</strong> the agent to test a URL — by name, by slash command, or in plain English.</li>
+          </ol>
+          <p class="muted">The agent narrates its scope before driving Chrome, so you always know what's about to happen.</p>
+        </div>
+
+        <div class="code-card">
+          <div class="code-tabs" role="tablist" aria-label="Example prompts">
+            <button class="code-tab is-active" role="tab" aria-selected="true" data-target="ex-mention">@mention</button>
+            <button class="code-tab" role="tab" aria-selected="false" data-target="ex-slash">slash</button>
+            <button class="code-tab" role="tab" aria-selected="false" data-target="ex-flow">flow</button>
+            <button class="code-tab" role="tab" aria-selected="false" data-target="ex-bulk">bulk</button>
+          </div>
+
+          <pre id="ex-mention" class="code-block is-active" role="tabpanel"><button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button><code>@UI Test  Test https://example.com on desktop, mobile, tablet</code></pre>
+
+          <pre id="ex-slash" class="code-block" role="tabpanel" hidden><button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button><code>/ui-test-smoke   url=https://example.com
+/ui-test-a11y    url=https://example.com
+/ui-test-perf    url=https://example.com  device=mobile
+/ui-test-scaffold</code></pre>
+
+          <pre id="ex-flow" class="code-block" role="tabpanel" hidden><button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button><code>Login flow on https://example.com/login:
+  fill Email qa@x.com
+  fill Password ********
+  click Sign in
+  expect Dashboard</code></pre>
+
+          <pre id="ex-bulk" class="code-block" role="tabpanel" hidden><button class="copy-btn" type="button" aria-label="Copy snippet">Copy</button><code>/ui-test-run  folder=./.ui-tests  filter=checkout/**  devices=mobile,tablet</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALL -->
+    <section class="section section-alt" id="install">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">Install</span>
+          <h2>Get it running in under a minute</h2>
+        </header>
+
+        <div class="install-grid">
+          <article class="install-card">
+            <h3>From the Marketplace</h3>
+            <p>One click. The extension installs the agent, eight prompts, and registers the MCP server.</p>
+            <a class="btn btn-primary" href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">Open Marketplace</a>
+          </article>
+
+          <article class="install-card">
+            <h3>From the command line</h3>
+            <pre class="code-block code-block--mini"><button class="copy-btn" type="button" aria-label="Copy command">Copy</button><code>code --install-extension BipulRaman.ui-test-agent</code></pre>
+            <p class="muted small">Requires the <code>code</code> CLI on your PATH.</p>
+          </article>
+
+          <article class="install-card">
+            <h3>Requirements</h3>
+            <ul class="check-list">
+              <li>VS Code 1.101+ with GitHub Copilot Chat enabled</li>
+              <li>Node.js on <code>PATH</code> (for <code>npx</code>)</li>
+              <li>Google Chrome installed locally</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAFETY -->
+    <section class="section">
+      <div class="container safety-grid">
+        <div>
+          <span class="eyebrow">Safety</span>
+          <h2>Read-only by design</h2>
+          <p>The agent's <code>editFiles</code> capability is whitelisted to test and report folders only — it can scaffold and write reports, but never modifies the product it tests. Same-origin crawls are capped at 25 pages by default. Real credentials and destructive actions are refused unless explicitly authorized.</p>
+          <ul class="check-list">
+            <li>No writes outside <code>./.ui-tests/</code> and its <code>reports/</code> subfolder</li>
+            <li>Crawl depth and page count capped by default</li>
+            <li>Refuses destructive actions (deletes, payments, account changes) without explicit consent</li>
+            <li>Locally edited prompt files are preserved across extension upgrades</li>
+          </ul>
+        </div>
+        <div class="safety-art" aria-hidden="true">
+          <svg viewBox="0 0 200 200" width="100%" height="100%">
+            <defs>
+              <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--accent)" />
+                <stop offset="100%" stop-color="var(--accent-2)" />
+              </linearGradient>
+            </defs>
+            <path d="M100 15 L170 40 V100 C170 140 140 170 100 185 C60 170 30 140 30 100 V40 Z"
+                  fill="url(#shieldGrad)" opacity="0.18" stroke="url(#shieldGrad)" stroke-width="2"/>
+            <path d="M70 100 L92 122 L135 78" fill="none" stroke="url(#shieldGrad)" stroke-width="6"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section-alt" id="faq">
+      <div class="container">
+        <header class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2>Frequently asked</h2>
+        </header>
+
+        <div class="faq">
+          <details>
+            <summary>Do I need to write any test code?</summary>
+            <p>No. You write Markdown — or just a sentence in chat. The agent interprets it, runs the checks, and writes the report.</p>
+          </details>
+          <details>
+            <summary>Where do reports get written?</summary>
+            <p>By default into <code>./.ui-tests/reports/</code> in your workspace. Each run produces a per-case Markdown file plus a roll-up summary.</p>
+          </details>
+          <details>
+            <summary>Can it run in CI?</summary>
+            <p>Today the agent is interactive (Copilot Chat). The scaffolded <code>.ui-test.md</code> files are designed to be portable so you can plug them into a future headless runner.</p>
+          </details>
+          <details>
+            <summary>Will it modify my source code?</summary>
+            <p>No. Its <code>editFiles</code> capability is whitelisted to <code>./.ui-tests/</code> only. Application source is strictly read-only.</p>
+          </details>
+          <details>
+            <summary>Does it support custom Chrome paths or channels?</summary>
+            <p>Yes — <code>uiTestAgent.chromeExecutablePath</code> and <code>uiTestAgent.chromeChannel</code> let you point at a specific Chrome / Chromium / Edge binary.</p>
+          </details>
+          <details>
+            <summary>What happens to my prompt files when the extension updates?</summary>
+            <p>Files you've edited locally are preserved untouched. Only files matching the previously installed version are updated. You can force-overwrite with the <em>Install / Update Prompt Files</em> command.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <div class="container cta-inner">
+        <h2>Stop writing browser test code.<br/>Start writing intent.</h2>
+        <p>Install UI Test Agent and let Copilot Chat do the QA.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">Install from Marketplace</a>
+          <a class="btn btn-ghost btn-lg" href="https://github.com/BipulRaman/UI-Test-Agent" target="_blank" rel="noopener">Star on GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="#top">
+          <img src="assets/favicon.svg" alt="" width="24" height="24" />
+          <span>UI Test Agent</span>
+        </a>
+        <p class="muted small">AI-powered, browser-driven QA for VS Code Copilot Chat.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Project</h4>
+        <a href="https://github.com/BipulRaman/UI-Test-Agent" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/BipulRaman/UI-Test-Agent/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="https://github.com/BipulRaman/UI-Test-Agent/blob/main/extension/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
+      </div>
+      <div class="footer-links">
+        <h4>Install</h4>
+        <a href="https://marketplace.visualstudio.com/items?itemName=BipulRaman.ui-test-agent" target="_blank" rel="noopener">VS Code Marketplace</a>
+        <a href="https://www.npmjs.com/package/chrome-devtools-mcp" target="_blank" rel="noopener">chrome-devtools-mcp</a>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <a href="https://github.com/BipulRaman/UI-Test-Agent/blob/main/extension/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <small>© <span id="year"></span> Bipul Raman · Built with plain HTML, CSS, and a little JavaScript.</small>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

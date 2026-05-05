@@ -1,0 +1,135 @@
+{
+  "name": "ui-test-agent",
+  "displayName": "UI Test Agent",
+  "description": "AI-powered, browser-driven QA specialist for VS Code Copilot Chat. One-click install of the UI Test agent, 8 prompt entry points, and auto-configured Chrome DevTools MCP server.",
+  "version": "0.3.1",
+  "publisher": "BipulRaman",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "chat",
+    "agent",
+    "ui-test",
+    "qa",
+    "accessibility",
+    "lighthouse",
+    "chrome-devtools",
+    "mcp",
+    "browser-automation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BipulRaman/UI-Test-Agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BipulRaman/UI-Test-Agent/issues"
+  },
+  "homepage": "https://github.com/BipulRaman/UI-Test-Agent#readme",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "uiTestAgent.install",
+        "title": "UI Test Agent: Install / Update Prompt Files",
+        "category": "UI Test Agent"
+      },
+      {
+        "command": "uiTestAgent.openPromptsFolder",
+        "title": "UI Test Agent: Open Prompts Folder",
+        "category": "UI Test Agent"
+      },
+      {
+        "command": "uiTestAgent.uninstall",
+        "title": "UI Test Agent: Remove Installed Prompt Files",
+        "category": "UI Test Agent"
+      },
+      {
+        "command": "uiTestAgent.showWelcome",
+        "title": "UI Test Agent: Show Welcome / Usage",
+        "category": "UI Test Agent"
+      },
+      {
+        "command": "uiTestAgent.mcpStatus",
+        "title": "UI Test Agent: Show Chrome DevTools MCP Status",
+        "category": "UI Test Agent"
+      },
+      {
+        "command": "uiTestAgent.checkEnvironment",
+        "title": "UI Test Agent: Check Environment (Node.js + Chrome)",
+        "category": "UI Test Agent"
+      }
+    ],
+    "configuration": {
+      "title": "UI Test Agent",
+      "properties": {
+        "uiTestAgent.autoInstallPrompts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically copy the UI Test agent and prompt files into your VS Code prompts folder on activation. Existing files with local edits are preserved."
+        },
+        "uiTestAgent.enableChromeDevToolsMcp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Register the Chrome DevTools MCP server (chrome-devtools-mcp) so the agent can drive a real Chrome browser. Requires Node.js / npx on PATH."
+        },
+        "uiTestAgent.chromeDevToolsMcpVersion": {
+          "type": "string",
+          "default": "latest",
+          "description": "npm version tag of the chrome-devtools-mcp package to launch (e.g. 'latest' or '0.7.0')."
+        },
+        "uiTestAgent.chromeExecutablePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to a Chrome / Chromium / Edge executable. When set, this is passed to chrome-devtools-mcp as `--executablePath` and overrides auto-detection. Leave empty to let chrome-devtools-mcp auto-detect Chrome (or auto-download a Chromium build on first use).",
+          "scope": "machine-overridable"
+        },
+        "uiTestAgent.chromeChannel": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "stable", "beta", "canary", "dev"],
+          "enumDescriptions": [
+            "Default — let chrome-devtools-mcp choose.",
+            "Use installed Chrome Stable.",
+            "Use installed Chrome Beta.",
+            "Use installed Chrome Canary.",
+            "Use installed Chrome Dev."
+          ],
+          "markdownDescription": "Chrome release channel passed to chrome-devtools-mcp as `--channel`. Ignored when `#uiTestAgent.chromeExecutablePath#` is set."
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "uiTestAgent.chromeDevTools",
+        "label": "Chrome DevTools (UI Test Agent)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "vscode:uninstall": "node ./scripts/uninstall.js",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.101.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.5.4"
+  }
+}

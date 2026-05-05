@@ -1,0 +1,150 @@
+name: Publish VS Code Extension
+
+# Publishes the UI Test Agent extension to the Visual Studio Marketplace.
+#
+# Triggers
+# --------
+#  * Push a tag like  v0.3.1  (or  release-v0.3.1)  -> builds + publishes the version
+#    declared in extension/package.json.
+#  * Manual run via the Actions tab ("Run workflow")
+#       - dry_run = true  -> only build + upload .vsix artifact (no publish)
+#       - dry_run = false -> build + publish to the Marketplace
+#
+# Required repository secret
+# --------------------------
+#  * VSCE_PAT  -- Azure DevOps Personal Access Token with
+#                 "Marketplace -> Manage" scope, scoped to
+#                 "All accessible organizations".
+#                 See extension/PUBLISHING.md section 1.2.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "release-v*.*.*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (build .vsix only, do not publish)"
+        type: boolean
+        default: false
+      release_type:
+        description: "If publishing, optionally bump version (leave 'none' to publish package.json as-is)"
+        type: choice
+        default: "none"
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Compile TypeScript
+        run: npm run compile
+
+      - name: Read extension version
+        id: ver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          echo "version=$VERSION"     >> "$GITHUB_OUTPUT"
+          echo "name=$NAME"           >> "$GITHUB_OUTPUT"
+          echo "publisher=$PUBLISHER" >> "$GITHUB_OUTPUT"
+          echo "Extension: $PUBLISHER.$NAME @ $VERSION"
+
+      - name: Verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#release-}"   # strip optional 'release-' prefix
+          TAG="${TAG#v}"                      # strip leading 'v'
+          PKG="${{ steps.ver.outputs.version }}"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag version ($TAG) does not match extension/package.json version ($PKG)."
+            echo "Update package.json or re-tag, then push again."
+            exit 1
+          fi
+          echo "Tag and package.json agree on version $PKG."
+
+      - name: Package .vsix
+        run: npx --yes @vscode/vsce package --out "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-agent-${{ steps.ver.outputs.version }}-vsix
+          path: extension/ui-test-agent-${{ steps.ver.outputs.version }}.vsix
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to Visual Studio Marketplace
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "${VSCE_PAT}" ]; then
+            echo "::error::Repository secret VSCE_PAT is not set. See extension/PUBLISHING.md."
+            exit 1
+          fi
+
+          BUMP="${{ inputs.release_type }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$BUMP" ] && [ "$BUMP" != "none" ]; then
+            echo "Publishing with version bump: $BUMP"
+            npx --yes @vscode/vsce publish "$BUMP" --pat "$VSCE_PAT"
+          else
+            echo "Publishing the prebuilt .vsix as-is"
+            npx --yes @vscode/vsce publish \
+              --pat "$VSCE_PAT" \
+              --packagePath "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### UI Test Agent — Marketplace publish"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Publisher | \`${{ steps.ver.outputs.publisher }}\` |"
+            echo "| Extension | \`${{ steps.ver.outputs.name }}\` |"
+            echo "| Version   | \`${{ steps.ver.outputs.version }}\` |"
+            echo "| Trigger   | \`${{ github.event_name }}\` |"
+            echo "| Ref       | \`${{ github.ref }}\` |"
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "| Mode      | Dry run (artifact only) |"
+            else
+              echo "| Mode      | Published to Marketplace |"
+              echo ""
+              echo "View listing: <https://marketplace.visualstudio.com/items?itemName=${{ steps.ver.outputs.publisher }}.${{ steps.ver.outputs.name }}>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
