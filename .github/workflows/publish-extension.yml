@@ -5,10 +5,19 @@ name: Publish VS Code Extension
 # Triggers
 # --------
 #  * Push a tag like  v0.3.1  (or  release-v0.3.1)  -> builds + publishes the version
-#    declared in extension/package.json.
+#    declared in extension/package.json. Tag must match package.json version.
 #  * Manual run via the Actions tab ("Run workflow")
 #       - dry_run = true  -> only build + upload .vsix artifact (no publish)
 #       - dry_run = false -> build + publish to the Marketplace
+#
+# Versioning policy
+# -----------------
+#  This workflow NEVER bumps the version in CI. Bump locally with
+#       cd extension
+#       npm version patch    # or minor / major
+#       cd ..
+#       git push --follow-tags
+#  This guarantees package.json, the git tag, and the artifact filename all agree.
 #
 # Required repository secret
 # --------------------------
@@ -28,15 +37,6 @@ on:
         description: "Dry run (build .vsix only, do not publish)"
         type: boolean
         default: false
-      release_type:
-        description: "If publishing, optionally bump version (leave 'none' to publish package.json as-is)"
-        type: choice
-        default: "none"
-        options:
-          - none
-          - patch
-          - minor
-          - major
 
 permissions:
   contents: read
@@ -95,6 +95,32 @@ jobs:
           fi
           echo "Tag and package.json agree on version $PKG."
 
+      - name: Validate VSCE_PAT (fail-fast on bad credentials)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          PUBLISHER: ${{ steps.ver.outputs.publisher }}
+        run: |
+          if [ -z "${VSCE_PAT}" ]; then
+            echo "::error::Repository secret VSCE_PAT is not set."
+            echo "::error::Add it under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          echo "Checking PAT against publisher '$PUBLISHER'..."
+          if ! npx --yes @vscode/vsce verify-pat "$PUBLISHER" --pat "$VSCE_PAT"; then
+            echo "::error::VSCE_PAT failed verification for publisher '$PUBLISHER' (HTTP 401)."
+            echo "::error::Common causes:"
+            echo "::error::  1) PAT scope is wrong. It must include 'Marketplace -> Manage'."
+            echo "::error::  2) PAT 'Organization' dropdown must be 'All accessible organizations'."
+            echo "::error::  3) PAT is expired (Azure DevOps PATs default to 30 days)."
+            echo "::error::  4) PAT belongs to a different Microsoft account than the one that owns the publisher."
+            echo "::error::  5) Publisher '$PUBLISHER' does not exist at https://marketplace.visualstudio.com/manage."
+            echo "::error::See extension/PUBLISHING.md section 1 for full setup."
+            exit 1
+          fi
+          echo "PAT is valid for publisher '$PUBLISHER'."
+
       - name: Package .vsix
         run: npx --yes @vscode/vsce package --out "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
 
@@ -111,21 +137,10 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          if [ -z "${VSCE_PAT}" ]; then
-            echo "::error::Repository secret VSCE_PAT is not set. See extension/PUBLISHING.md."
-            exit 1
-          fi
-
-          BUMP="${{ inputs.release_type }}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$BUMP" ] && [ "$BUMP" != "none" ]; then
-            echo "Publishing with version bump: $BUMP"
-            npx --yes @vscode/vsce publish "$BUMP" --pat "$VSCE_PAT"
-          else
-            echo "Publishing the prebuilt .vsix as-is"
-            npx --yes @vscode/vsce publish \
-              --pat "$VSCE_PAT" \
-              --packagePath "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
-          fi
+          echo "Publishing the prebuilt .vsix as-is (no version bump in CI)."
+          npx --yes @vscode/vsce publish \
+            --pat "$VSCE_PAT" \
+            --packagePath "ui-test-agent-${{ steps.ver.outputs.version }}.vsix"
 
       - name: Summary
         if: always()
